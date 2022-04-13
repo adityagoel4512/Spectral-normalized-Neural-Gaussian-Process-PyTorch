@@ -2,8 +2,8 @@ import math
 import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
-from models.resnet import ResNetBackbone
-from models.netresult import NetResult
+from .resnet import ResNetBackbone
+from .netresult import NetResult
 
 class RandomFeatureGaussianProcess(nn.Module):
     def __init__(

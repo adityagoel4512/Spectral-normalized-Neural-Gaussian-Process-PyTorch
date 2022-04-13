@@ -14,10 +14,12 @@ class ResNetBackbone(nn.Module):
     self.dropout_rate = dropout_rate
     self.input_layer = nn.Linear(in_features=input_features, out_features=num_hidden)
     self.hidden_layers = nn.Sequential(*[nn.Linear(in_features=num_hidden, out_features=num_hidden) for _ in range(num_hidden_layers)])
-    self.norm_multiplier = norm_multiplier
-    self.input_layer.register_full_backward_hook(self.spectral_norm_hook)
-    for hidden_layer in self.hidden_layers:
-      hidden_layer.register_full_backward_hook(self.spectral_norm_hook)
+    
+    if norm_multiplier is not None:
+      self.norm_multiplier = norm_multiplier
+      self.input_layer.register_full_backward_hook(self.spectral_norm_hook)
+      for hidden_layer in self.hidden_layers:
+        hidden_layer.register_full_backward_hook(self.spectral_norm_hook)
 
   def forward(self, input):
     input = self.input_layer(input)
