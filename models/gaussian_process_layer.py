@@ -5,14 +5,16 @@ from torch.nn.parameter import Parameter
 from .resnet import ResNetBackbone
 from .netresult import NetResult
 
+
 class RandomFeatureGaussianProcess(nn.Module):
     def __init__(
-        self,
-        out_features: int,
-        backbone: nn.Module = ResNetBackbone(input_features=2, num_hidden_layers=5, num_hidden=128, dropout_rate=0.1),
-        num_inducing: int = 1024,
-        momentum: float = 0.9,
-        ridge_penalty: float = 1e-6
+            self,
+            out_features: int,
+            backbone: nn.Module = ResNetBackbone(input_features=2, num_hidden_layers=5, num_hidden=128,
+                                                 dropout_rate=0.1),
+            num_inducing: int = 1024,
+            momentum: float = 0.9,
+            ridge_penalty: float = 1e-6
     ):
         super().__init__()
         self.out_features = out_features
@@ -28,7 +30,7 @@ class RandomFeatureGaussianProcess(nn.Module):
         nn.init.uniform_(random_fourier_feature_layer.bias, a=0.0, b=2 * math.pi)
 
         self.rff = nn.Sequential(backbone, random_fourier_feature_layer)
-        
+
         # RFF approximation reduces the GP to a standard Bayesian linear model,
         # with beta being the parameters we wish to estimate by maximising
         # p(beta | D). To this end p(beta) (the prior) is gaussian so the loss
@@ -51,15 +53,16 @@ class RandomFeatureGaussianProcess(nn.Module):
             requires_grad=False,
         )
 
-    def forward(self, X, with_variance = False, update_precision = False):        
+    def forward(self, X, with_variance=False, update_precision=False):
         features = torch.cos(self.rff(X))
-        
+
         if update_precision:
             self.update_precision_(features)
 
         logits = self.beta(features)
+
         if not with_variance:
-            return NetResult(mean=logits,variance=None)
+            return NetResult(mean=logits, variance=None)
         else:
             if not self.is_fit:
                 raise ValueError(
@@ -67,7 +70,7 @@ class RandomFeatureGaussianProcess(nn.Module):
                     "`with_variance` to True"
                 )
             with torch.no_grad():
-                variances = torch.bmm(features[:, None, :], (features @ self.covariance)[:, :, None],).reshape(-1)
+                variances = torch.bmm(features[:, None, :], (features @ self.covariance)[:, :, None], ).reshape(-1)
 
             return NetResult(logits, variances)
 
@@ -75,7 +78,7 @@ class RandomFeatureGaussianProcess(nn.Module):
         self.precision = self.precision_initial.detach()
 
     def update_precision_(self, features):
-        # This assumes that all classes share a precision matrix like in 
+        # This assumes that all classes share a precision matrix like in
         # https://www.tensorflow.org/tutorials/understanding/sngp
 
         # The original SNGP paper defines precision and covariance matrices on a
@@ -84,11 +87,12 @@ class RandomFeatureGaussianProcess(nn.Module):
         with torch.no_grad():
             if self.momentum < 0:
                 # self.precision = identity => self.precision = identity + features.T @ features
+                print(f'features: {features.shape}')
+                print(f'precision: {self.precision.shape}')
                 self.precision = Parameter(self.precision + features.T @ features)
             else:
-                self.precision = Parameter(self.momentum * self.precision + 
-                (1 - self.momentum) * features.T @ features)
-                
+                self.precision = Parameter(self.momentum * self.precision +
+                                           (1 - self.momentum) * features.T @ features)
 
     def update_precision(self, X):
         with torch.no_grad():

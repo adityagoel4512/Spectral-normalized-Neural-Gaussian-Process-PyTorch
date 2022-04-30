@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from models.gaussian_process_layer import RandomFeatureGaussianProcess
+from .gaussian_process_layer import RandomFeatureGaussianProcess
 import torch
 from torch.utils.data import DataLoader
 
