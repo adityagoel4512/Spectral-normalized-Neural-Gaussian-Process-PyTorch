@@ -39,7 +39,14 @@ class RandomFeatureGaussianProcess(nn.Module):
         nn.init.normal_(self.beta.weight, mean=0.0, std=1.0)
 
         # RFF precision and covariance matrices
-        self.is_fit = False
+        self.register_buffer('is_fit', torch.tensor(False))
+        self.is_fit = torch.tensor(False)
+
+        self.register_buffer('dataset_passed', torch.tensor(False))
+        self.dataset_passed = torch.tensor(False)
+
+        self.register_buffer('max_variance', torch.ones(1))
+
         self.covariance = Parameter(
             self.ridge_penalty * torch.eye(num_inducing),
             requires_grad=False,
@@ -52,6 +59,7 @@ class RandomFeatureGaussianProcess(nn.Module):
             self.precision_initial,
             requires_grad=False,
         )
+
 
     def forward(self, X, with_variance=False, update_precision=False):
         features = torch.cos(self.rff(X))
@@ -71,6 +79,11 @@ class RandomFeatureGaussianProcess(nn.Module):
                 )
             with torch.no_grad():
                 variances = torch.bmm(features[:, None, :], (features @ self.covariance)[:, :, None], ).reshape(-1)
+                if not self.dataset_passed:
+                    print(torch.max(variances).shape)
+                    self.max_variance = torch.max(variances).unsqueeze(dim=0)
+                    self.dataset_passed = torch.tensor(True)
+                variances = variances / self.max_variance
 
             return NetResult(logits, variances)
 
@@ -106,13 +119,15 @@ class RandomFeatureGaussianProcess(nn.Module):
             try:
                 L = torch.linalg.cholesky(self.precision)
                 self.covariance = Parameter(self.ridge_penalty * L.cholesky_inverse(), requires_grad=False)
-                self.is_fit = True
+                self.is_fit = torch.tensor(True)
                 print('cholesky')
             except:
                 self.covariance = Parameter(self.ridge_penalty * self.precision.cholesky_inverse(), requires_grad=False)
-                self.is_fit = True
+                self.is_fit = torch.tensor(True)
                 print('standard inversion')
+        else:
+            print(f'no inversion, already fit')
 
     def reset_covariance(self):
-        self.is_fit = False
+        self.is_fit = torch.tensor(False)
         self.covariance.zero_()
