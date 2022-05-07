@@ -1,17 +1,19 @@
 import matplotlib.pyplot as plt
-from .gaussian_process_layer import RandomFeatureGaussianProcess
 import torch
 from torch.utils.data import DataLoader
 
+from .gaussian_process_layer import RandomFeatureGaussianProcess
+
+
 class Trainer:
-  def __init__(self, 
-               model_config, 
+  def __init__(self,
+               model_config,
                task_type='classification',
                model=RandomFeatureGaussianProcess):
     self.model = model(**model_config)
     print(self.model)
     criterions = {
-        'classification': torch.nn.CrossEntropyLoss(reduction='mean'),
+      'classification': torch.nn.CrossEntropyLoss(reduction='mean'),
         'regression': torch.nn.MSELoss(reduction='mean')
         }
     self.criterion = criterions[task_type]
@@ -57,12 +59,12 @@ class Trainer:
     self.model.train(False)
     if not self.update_precision_incrementally:
         self.model.update_precision(next(iter(DataLoader(training_data, **{**data_loader_config, **dict(batch_size=len(training_data))})))[0])
-    return self.model 
+    return self.model
 
   def plot_loss(self, title):
     if not hasattr(self, 'epoch_losses'):
-        raise ValueError('plot_loss invoked without first training model')
-    plt.plot(list(range(1, len(self.epoch_losses)+1)), self.epoch_losses)
+      raise ValueError('plot_loss invoked without first training model')
+    plt.plot(list(range(1, len(self.epoch_losses) + 1)), self.epoch_losses)
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.title(f'Training Loss [{title}]')

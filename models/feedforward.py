@@ -5,6 +5,7 @@ from models.sngp.models.resnet import ResNetBackbone
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
+
 class FeedForwardResNet(torch.nn.Module):
     def __init__(self, input_features, num_hidden_layers, num_hidden, dropout_rate, output_features):
         super(FeedForwardResNet, self).__init__()
