@@ -59,11 +59,11 @@ class Trainer:
         self.model.update_precision(next(iter(DataLoader(training_data, **{**data_loader_config, **dict(batch_size=len(training_data))})))[0])
     return self.model 
 
-  def plot_loss(self):
+  def plot_loss(self, title):
     if not hasattr(self, 'epoch_losses'):
         raise ValueError('plot_loss invoked without first training model')
     plt.plot(list(range(1, len(self.epoch_losses)+1)), self.epoch_losses)
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
-    plt.title('Training Loss')
+    plt.title(f'Training Loss [{title}]')
     plt.show()

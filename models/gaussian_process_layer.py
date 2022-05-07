@@ -1,9 +1,11 @@
 import math
+
 import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
-from .resnet import ResNetBackbone
+
 from .netresult import NetResult
+from .resnet import ResNetBackbone
 
 
 class RandomFeatureGaussianProcess(nn.Module):
@@ -60,7 +62,6 @@ class RandomFeatureGaussianProcess(nn.Module):
             requires_grad=False,
         )
 
-
     def forward(self, X, with_variance=False, update_precision=False):
         features = torch.cos(self.rff(X))
 
@@ -74,7 +75,7 @@ class RandomFeatureGaussianProcess(nn.Module):
         else:
             if not self.is_fit:
                 raise ValueError(
-                    "`compute_covariance` should be called before setting "
+                    "`update_covariance` should be called before setting "
                     "`with_variance` to True"
                 )
             with torch.no_grad():
