@@ -4,13 +4,14 @@ from torch.utils.data import DataLoader
 
 from .gaussian_process_layer import RandomFeatureGaussianProcess
 
-
 class Trainer:
   def __init__(self,
                model_config,
                task_type='classification',
-               model=RandomFeatureGaussianProcess):
+               model=RandomFeatureGaussianProcess,
+               device=torch.device('cuda')):
     self.model = model(**model_config)
+    self.model.to(device)
     print(self.model)
     criterions = {
       'classification': torch.nn.CrossEntropyLoss(reduction='mean'),

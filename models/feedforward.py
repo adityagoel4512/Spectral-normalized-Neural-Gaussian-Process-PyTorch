@@ -38,13 +38,20 @@ class FeedForwardNet(torch.nn.Module):
         output = self.output_layer(output)
         return output
 
+    def to(self, device):
+        self.input_layer.to(device)
+        self.hidden_layers.to(device)
+        self.output_layer.to(device)
+        return self
+
 
 class FeedForwardTrainer:
     def __init__(self,
                  model_config,
                  task_type='classification',
-                 model=FeedForwardNet):
+                 model=FeedForwardNet, device=torch.device('cuda')):
         self.model = model(**model_config)
+        self.model.to(device)
         print(self.model)
         criterions = {
             'classification': torch.nn.CrossEntropyLoss(reduction='mean'),

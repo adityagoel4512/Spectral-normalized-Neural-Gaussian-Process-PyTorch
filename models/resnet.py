@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+device = torch.device('cuda')
 
 class ResNetBackbone(nn.Module):
   def __init__(self, 
