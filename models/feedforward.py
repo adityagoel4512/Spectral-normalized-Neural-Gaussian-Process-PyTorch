@@ -1,9 +1,11 @@
+import copy
+
+import matplotlib.pyplot as plt
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from models.sngp.models.resnet import ResNetBackbone
-import torch.nn.functional as F
-import matplotlib.pyplot as plt
 
 
 class FeedForwardResNet(torch.nn.Module):
@@ -59,10 +61,11 @@ class FeedForwardTrainer:
         }
         self.criterion = criterions[task_type]
 
-    def train(self, training_data, data_loader_config, epochs=100, lr=1e-3):
+    def train(self, training_data, data_loader_config, epochs=100, lr=1e-3, checkpoint_models=tuple()):
         training_loader = DataLoader(training_data, **data_loader_config)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
-        mse = torch.nn.MSELoss(reduction='mean')
+        assert all(
+            map(lambda c: 0.0 <= c <= epochs, checkpoint_models)), 'all checkpoints should be in range [0.0, 1.0]'
 
         def compute_loss(batch):
             X, y = batch
@@ -73,6 +76,8 @@ class FeedForwardTrainer:
 
         self.model.train(True)
         self.epoch_losses = []
+        checkpoint_iter = iter(tuple(int(epochs * checkpoint / 100) for checkpoint in checkpoint_models) + (None,))
+        next_checkpoint = next(checkpoint_iter)
         for epoch in range(epochs):
             running_loss = 0.
             for i, batch in enumerate(training_loader):
@@ -84,9 +89,17 @@ class FeedForwardTrainer:
             running_loss /= i
             self.epoch_losses.append(running_loss)
             if epoch % 10 == 0:
-                print(f'Avg Loss Epoch {epoch}: {running_loss}')
-        self.model.train(False)
-        return self.model
+                print(f'Avg Loss Epoch {epoch}/{epochs}: {running_loss}')
+            if epoch == next_checkpoint:
+                print(f'Producing checkpoint: {next_checkpoint} epochs')
+                yield self.generate_model(copy.deepcopy(self.model))
+                next_checkpoint = next(checkpoint_iter)
+        self.model = self.generate_model(copy.deepcopy(self.model))
+        yield self.model
+
+    def generate_model(self, model):
+        model.train(False)
+        return model
 
     def plot_loss(self, title):
         if not hasattr(self, 'epoch_losses'):
