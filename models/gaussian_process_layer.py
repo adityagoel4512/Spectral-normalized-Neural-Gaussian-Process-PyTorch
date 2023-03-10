@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
 
-from .netresult import NetResult
 from .resnet import ResNetBackbone
 
 
@@ -81,7 +80,6 @@ class RandomFeatureGaussianProcess(nn.Module):
             with torch.no_grad():
                 variances = torch.bmm(features[:, None, :], (features @ self.covariance)[:, :, None], ).reshape(-1)
                 if not self.dataset_passed:
-                    print(torch.max(variances).shape)
                     self.max_variance = torch.max(variances).unsqueeze(dim=0)
                     self.dataset_passed = torch.tensor(True)
                 variances = variances / self.max_variance

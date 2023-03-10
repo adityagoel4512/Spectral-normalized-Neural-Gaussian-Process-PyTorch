@@ -54,7 +54,6 @@ class FeedForwardTrainer:
                  model=FeedForwardNet, device=torch.device('cuda')):
         self.model = model(**model_config)
         self.model.to(device)
-        print(self.model)
         criterions = {
             'classification': torch.nn.CrossEntropyLoss(reduction='mean'),
             'regression': torch.nn.MSELoss(reduction='mean')
